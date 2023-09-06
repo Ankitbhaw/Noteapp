@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>My Notes - A Simple Notes Taking App</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+      integrity="sha384-9ndCyUaIbzAi2FUVXJi0CjmCapSmO7SnpJef0486qhLnuZ2cdeRhO02iuK6FUUVM"
+      crossorigin="anonymous"
+    />
+  </head>
+
+  <body style="background-color: gainsboro">
+    <nav class="navbar navbar-dark navbar-expand-lg bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">My Notes</a>
+        <button
+          class="navbar-toggler"
+          type="button"
+          data-bs-toggle="collapse"
+          data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent"
+          aria-expanded="false"
+          aria-label="Toggle navigation"
+        >
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="/home"
+                >Home</a
+              >
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" aria-current="page" href="#">About</a>
+            </li>
+          </ul>
+          <div class="d-flex" role="search">
+            <a href="/login"
+              ><button class="btn btn-primary mx-2" type="submit" id="logout">
+                Logout
+              </button></a
+            >
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <div
+        style="
+          background-color: gray;
+          width: 70%;
+          margin: auto;
+          border-radius: 10px;
+        "
+      >
+        <h1 class="my-4" style="text-align: center; color: aliceblue">
+          Add Note
+        </h1>
+        <div class="mb-3">
+          <h4 for="title" class="form-label" style="text-align: center">
+            Title
+          </h4>
+          <input
+            type="text"
+            class="form-control"
+            id="title"
+            aria-describedby="titleHelp"
+            style="width: 400px; margin: auto"
+          />
+          <div
+            id="titleHelp"
+            class="form-text"
+            style="text-align: center; color: whitesmoke; opacity: 0.5"
+          >
+            Try to add a meaningfull title
+          </div>
+        </div>
+        <div class="mb-3">
+          <h4 for="Desc" class="form-label" style="text-align: center">
+            Description
+          </h4>
+          <textarea
+            type="text"
+            class="form-control"
+            id="Desc"
+            style="width: 400px; margin: auto"
+          ></textarea>
+        </div>
+        <div class="text-center pb-4">
+          <button id="sumbit" type="submit" class="btn btn-primary">
+            Submit
+          </button>
+        </div>
+      </div>
+
+      <h1 class="my-4" style="text-align: center">Your Notes</h1>
+      <div class="mynotes row" id="mynotes"></div>
+    </div>
+
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-geWF76RCwLtnZ8qwWowPQNguL3RmwHVBC9FhGdlKrxdiJJigb/j/68SIy3Te4Bkz"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      async function postData(url = "", data = {}) {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        let rdata = await response.json();
+        return rdata;
+      }
+
+      const fetchnotes = () => {
+        const user = JSON.parse(localStorage.getItem("user"));
+        // if (!user || !user.Token) {
+        //   window.location = "/login";
+        // }
+        if (user && user.email) {
+          let notecontainer = document.querySelector(".mynotes");
+          notecontainer.innerHTML = "";
+
+          const notes = postData("/getnotes", { email: user.email });
+          notes.then((notes) => {
+            notes.notes.forEach((element) => {
+              let note = `<div class="card mx-2" style="width: 18rem">
+              <div class="card-body">
+                <h4 class="card-title">${element.title}</h4>
+                <h6 class="card-subtitle mb-2 text-body-secondary" style = " opacity:0.5">
+                  Note Description
+                </h6>
+                <p class="card-text">
+                 ${element.desc}.
+                </p>
+                <button  class="btn btn-primary mx-2" type="submit" id="delete"  style = "font-size:15px; padding:2px 4px;">Delete</button>
+              </div>
+            </div>`;
+
+              notecontainer.innerHTML += note;
+            });
+          });
+        } else {
+          alert("Please login first");
+          window.location = "/login";
+        }
+      };
+
+      fetchnotes();
+
+      let sumbit = document.getElementById("sumbit");
+      sumbit.addEventListener("click", async () => {
+        let title = document.getElementById("title").value;
+        let desc = document.getElementById("Desc").value;
+        let email = JSON.parse(localStorage.getItem("user"))?.email;
+        let resp = await postData("/addnote", { title, desc, email });
+
+        if (resp.success) {
+          alert("Note is created");
+          document.getElementById("title").value = "";
+          document.getElementById("Desc").value = "";
+          fetchnotes();
+        }
+      });
+      let logout = document.getElementById("logout");
+      logout.addEventListener("click", () => {
+        localStorage.removeItem("user");
+      });
+    </script>
+  </body>
+</html>
